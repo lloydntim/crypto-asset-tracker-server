@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/app.js",
+  "engines": {
+    "node": "13.5.0"
+  },
   "scripts": {
-    "start": "tsc && nodemon dist/app.js",
+    "start": "node dist/app.js",
+    "watch-node": "nodemon dist/app.js",
+    "watch-ts": "tsc -w",
+    "postinstall": "tsc",
     "lint": "eslint . --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
