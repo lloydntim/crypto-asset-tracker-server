@@ -10,7 +10,7 @@ const app = express();
 const apiVersion = '1';
 const routes = express.Router();
 const port = process.env.PORT || 3000;
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:3002';
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:3001';
 
 const cmcApiKey = process.env.CMC_PRO_API_KEY;
 const cmcUrl =
