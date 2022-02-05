@@ -1,5 +1,7 @@
 import express from 'express';
 import axios from 'axios';
+import cors from 'cors';
+import bodyParser from 'body-parser';
 import 'dotenv/config';
 
 import { holdingsItems } from './data';
@@ -10,7 +12,7 @@ const app = express();
 const apiVersion = '1';
 const routes = express.Router();
 const port = process.env.PORT || 3000;
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:3001';
+const clientUrl = process.env.CLIENT_URL || /http:\/\/localhost:*/;
 
 const cmcApiKey = process.env.CMC_PRO_API_KEY;
 const cmcUrl =
@@ -18,7 +20,7 @@ const cmcUrl =
 
 const getCryptoData = async (req, res) => {
   try {
-    const { idList, currency } = req.params;
+    const { idList, currency } = req.query;
     const response = await axios.get(cmcUrl, {
       headers: {
         'X-CMC_PRO_API_KEY': cmcApiKey,
@@ -31,7 +33,6 @@ const getCryptoData = async (req, res) => {
 
     const results = processCoinsData(response.data.data, currency);
 
-    console.log('results', results);
     res.status(200).json({ results });
   } catch (ex) {
     console.log(ex);
@@ -49,11 +50,14 @@ const getHoldingsData = async (req, res) => {
   }
 };
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Website you wish to allow to connect
+app.use(cors({ origin: clientUrl }));
+
 // Add headers
 app.use((req, res, next) => {
-  // Website you wish to allow to connect
-  res.setHeader('Access-Control-Allow-Origin', clientUrl);
-
   // Request methods you wish to allow
   res.setHeader(
     'Access-Control-Allow-Methods',
@@ -81,7 +85,7 @@ app.get('/', (req, res) => {
 });
 
 routes.get('/holdings', getHoldingsData);
-routes.get('/coins/:currency/:idList', getCryptoData);
+routes.get('/coins', getCryptoData);
 
 app.listen(port, () => {
   return console.log(`Express is listening at http://localhost:${port}`);
