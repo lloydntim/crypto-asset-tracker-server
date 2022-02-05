@@ -41,11 +41,10 @@ const getCryptoData = async (req, res) => {
 
 const getHoldingsData = async (req, res) => {
   try {
-    console.log('holdings:', holdingsItems);
     const holdingsData = processHoldingsData(holdingsItems);
-    console.log('holdingsData', holdingsData);
     res.status(200).json({ results: holdingsData });
   } catch (ex) {
+    console.log(ex);
     res.status(500).send('Something went wrong');
   }
 };
@@ -78,11 +77,7 @@ app.use((req, res, next) => {
 app.use(`/api/v${apiVersion}/`, routes);
 
 app.get('/', (req, res) => {
-  res.send('Hello World');
-});
-
-routes.get('/test', (req, res) => {
-  res.send('Some data');
+  res.send('Welcome to LNCD Crypto Checker API');
 });
 
 routes.get('/holdings', getHoldingsData);
