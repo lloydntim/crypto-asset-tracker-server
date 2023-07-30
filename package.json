@@ -2,14 +2,15 @@
   "name": "lncd-crypto-checker-server",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/app.js",
+  "main": "dist/server.js",
   "engines": {
-    "node": "13.5.0"
+    "node": "16.15.0"
   },
   "scripts": {
-    "start": "node dist/app.js",
-    "watch-node": "nodemon dist/app.js",
+    "start": "node dist/server.js",
+    "watch-node": "nodemon dist/server.js",
     "watch-ts": "tsc -w",
+    "dev": "npm run watch-node && npm run watch-ts",
     "postinstall": "tsc",
     "lint": "eslint . --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -18,18 +19,32 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/express": "^4.17.2",
-    "@typescript-eslint/eslint-plugin": "^5.10.2",
-    "@typescript-eslint/parser": "^5.10.2",
-    "eslint": "^8.8.0",
-    "nodemon": "^2.0.15",
-    "typescript": "^4.5.5"
+    "@types/express": "^4.17.17",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
+    "eslint": "^8.41.0",
+    "nodemon": "^2.0.22",
+    "typescript": "^5.0.4"
   },
   "dependencies": {
-    "axios": "^0.25.0",
+    "@apollo/server": "^4.7.5",
+    "apollo-server": "^3.6.4",
+    "apollo-server-core": "^3.6.4",
+    "apollo-server-express": "^3.6.4",
+    "axios": "^1.4.0",
+    "bcrypt": "^5.0.1",
     "body-parser": "^1.19.1",
+    "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^16.0.0",
-    "express": "^4.17.2"
+    "express": "^4.17.2",
+    "graphql": "^16.3.0",
+    "i18next": "^21.6.14",
+    "i18next-http-middleware": "^3.2.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^6.2.6",
+    "nodemailer": "^6.7.2",
+    "nodemailer-mailgun-transport": "^2.1.3"
   }
 }
