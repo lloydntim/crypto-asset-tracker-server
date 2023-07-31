@@ -27,7 +27,8 @@ export const cmcUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency';
 export const mongoURI =
   NODE_ENV === 'development' ? MONGODB_DEV_URI : MONGODB_URI;
 
-export const mongoConfig = {
+export const GRAPHQL_ENDPOINT = '/graphql';
+export const mongoOptions = {
   // useNewUrlParser: true,
   // useUnifiedTopology: true,
   // useCreateIndex: true,

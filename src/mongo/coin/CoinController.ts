@@ -1,4 +1,3 @@
-import { AuthenticationError, ApolloError } from 'apollo-server-express';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import { cmcUrl } from '../../config';
@@ -7,7 +6,7 @@ import Coin from './CoinModel';
 
 export const getCoin = async (parent, { coinId }, { currentUser, t }) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
 
   try {
     return await Coin.findOne({ coinId });
@@ -22,7 +21,7 @@ export const getCoinListings = async (
   { currentUser, t }
 ) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
 
   if (!symbols) return [];
   try {
@@ -37,9 +36,6 @@ export const getCoinListings = async (
       },
     });
 
-    // console.log('length', response.data.data.length);
-    // console.log('response', response.data.data.ETH.name);
-    // console.log('response', response.data.data.ETH.quote.EUR);
     return Object.values(response.data.data).map(
       ({
         name,
@@ -57,7 +53,7 @@ export const getCoinListings = async (
 
 export const getCoins = async (parent, { creatorId }, { currentUser, t }) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
   try {
     return (await creatorId) ? Coin.find({ creatorId }) : Coin.find({});
   } catch (error) {
@@ -71,7 +67,7 @@ export const addCoin = async (
   { currentUser, t }
 ) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
 
   try {
     let coinSymbol = symbol;
@@ -114,7 +110,7 @@ export const updateCoin = async (
   { currentUser, t }
 ) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
   try {
     return await Coin.findOneAndUpdate(
       { coinId },
@@ -122,13 +118,13 @@ export const updateCoin = async (
       { new: true }
     );
   } catch (error) {
-    throw new ApolloError(t('coin_error_listCouldNotBeUpdated'));
+    throw new Error(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
 export const removeCoin = async (parent, args, { currentUser, t }) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
   try {
     const { id: _id, creatorId } = args;
 
@@ -146,7 +142,7 @@ export const addCoinHolding = async (
   { currentUser, t }
 ) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
   const { type, name } = holding;
   const holdingId = `${type}-${name.toLowerCase().split(' ').join('-')}`;
   try {
@@ -166,7 +162,7 @@ export const updateCoinHolding = async (
   { currentUser, t }
 ) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
   try {
     return await Coin.findOneAndUpdate(
       { 'holdings._id': holdingId },
@@ -190,7 +186,7 @@ export const removeCoinHolding = async (
   { currentUser, t }
 ) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
   try {
     return await Coin.findOneAndUpdate(
       { 'holdings._id': holdingId },
@@ -223,29 +219,6 @@ export const getSymbols = async (parent, _, { currentUser, t }) => {
   // if (!currentUser.loggedIn)
   // throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
   try {
-    /*     const html = await fetchHTML('http://www.coingecko.com/');
-    const $ = cheerio.load(html);
-
-    const results = $('body').find('body table > tbody > tr > td a');
-
-    const symbols = results
-      .map((_, el) => {
-        const elementSelector = $(el);
-
-        const name = elementSelector
-          .find('span:first')
-          .text()
-          .replace(/\r?\n|\r/g, '');
-        const id = elementSelector
-          .find('span:last')
-          .text()
-          .replace(/\r?\n|\r/g, '');
-
-        return { name, id };
-      })
-      .get();
-
-    return symbols; */
     const url = `${cmcUrl}/listings/latest`;
 
     const response = await axios.get(url, {

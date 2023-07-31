@@ -1,4 +1,3 @@
-import { gql } from 'apollo-server-express';
 import {
   register,
   login,
@@ -8,14 +7,6 @@ import {
   getPasswordToken,
   updatePassword,
 } from '../mongo/auth/AuthController';
-
-import {
-  getList,
-  getLists,
-  addList,
-  updateList,
-  removeList,
-} from '../mongo/list/ListController';
 
 import {
   getCoinListings,
@@ -38,7 +29,7 @@ import {
   removeUser,
 } from '../mongo/user/UserController';
 
-export const typeDefs = gql`
+export const typeDefs = `
   scalar Date
 
   type User {
@@ -58,11 +49,6 @@ export const typeDefs = gql`
     message: String
   }
 
-  type Entry {
-    slug: String
-    name: String
-    amount: String
-  }
 
   enum HoldingType {
     WALLET
@@ -107,17 +93,6 @@ export const typeDefs = gql`
     price: String
   }
 
-  type List {
-    coinId: ID
-    symbol: String
-    exchanges: [String]
-    wallets: [String]
-    staking: [String]
-    creatorId: ID
-    createdAt: Date
-    updatedAt: Date
-  }
-
   type Symbol {
     id: ID
     name: String
@@ -134,9 +109,6 @@ export const typeDefs = gql`
 
     getUsers: [User]
     getUser(id: ID, username: String, email: String): User
-
-    getLists(creatorId: ID): [List]
-    getList(id: ID, name: String): List
 
     getCoinListings(symbols: String, convert: String): [CoinListing]
 
@@ -156,15 +128,6 @@ export const typeDefs = gql`
     updatePassword(resetPasswordToken: String, password: String): Auth
     updateUser(id: ID, username: String, email: String): User
     removeUser(id: ID): User
-
-    addList(name: String!, data: [[String]], creatorId: ID!): List
-    updateList(
-      id: ID!
-      exchanges: [String]
-      wallets: [String]
-      staking: [String]
-    ): List
-    removeList(id: ID, creatorId: ID): List
 
     addCoin(symbol: String, slug: String, creatorId: ID!): Coin
     updateCoin(id: ID!, symbol: String, holdings: HoldingInput): Coin
@@ -186,8 +149,6 @@ export const resolvers = {
     getPasswordToken,
     getUser,
     getUsers,
-    getList,
-    getLists,
     getCoinListings,
     getCoin,
     getCoins,
@@ -203,9 +164,6 @@ export const resolvers = {
     updatePassword,
     updateUser,
     removeUser,
-    addList,
-    updateList,
-    removeList,
     addCoin,
     updateCoin,
     removeCoin,

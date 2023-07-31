@@ -1,4 +1,3 @@
-import { ApolloError, AuthenticationError } from 'apollo-server-express';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
@@ -35,8 +34,7 @@ export const register = async (
       token: crypto.randomBytes(20).toString('hex'),
     });
 
-    if (!vToken)
-      throw new AuthenticationError(t('token_error_tokenCouldNotBeCreated'));
+    if (!vToken) throw new Error(t('token_error_tokenCouldNotBeCreated'));
 
     sendVerificationEmail(user, t, nodemailerMailgun);
 
@@ -44,7 +42,7 @@ export const register = async (
   } catch (error) {
     console.log('error', error);
     // Sentry.captureException(error);
-    throw new AuthenticationError(t('token_error_tokenCouldNotBeCreated'));
+    throw new Error(t('token_error_tokenCouldNotBeCreated'));
   }
 };
 
@@ -57,20 +55,19 @@ export const login = async (
   try {
     const user = await User.findOne({ username });
 
+    console.log(username);
     if (!user)
-      throw new AuthenticationError(
-        t('user_error_userCouldNotBeFound', { username })
-      );
+      throw new Error(t('user_error_userCouldNotBeFound', { username }));
 
     const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch)
-      throw new AuthenticationError(t('auth_error_incorrectPassword'));
+    if (!isMatch) throw new Error(t('auth_error_incorrectPassword'));
 
     return createToken({ id: user.id, username }, '7d');
   } catch (error) {
     // Sentry.captureException(error);
-    throw new AuthenticationError(error.message);
+    console.log('error', error);
+    throw new Error(error.message);
   }
 };
 
@@ -78,20 +75,19 @@ export const verify = async (parent, { token }, { t /* , Sentry */ }) => {
   try {
     const verificationToken = await Token.findOne({ token });
 
-    if (!verificationToken)
-      throw new AuthenticationError(t('token_error_tokenNotValid'));
+    if (!verificationToken) throw new Error(t('token_error_tokenNotValid'));
 
     const user = await User.findOne({ _id: verificationToken.userId });
 
     if (!user)
-      throw new AuthenticationError(
+      throw new Error(
         t('user_error_userWithIdCouldNotBeFound', {
           userId: verificationToken.userId,
         })
       );
     // Sentry.configureScope((scope) => scope.setUser({ username: user.username }));
     if (user.isVerified)
-      throw new AuthenticationError(
+      throw new Error(
         t('auth_error_userAlreadyVerified', { username: user.username })
       );
 
@@ -100,15 +96,13 @@ export const verify = async (parent, { token }, { t /* , Sentry */ }) => {
     const updatedUser = await user.save();
 
     if (!updatedUser)
-      throw new AuthenticationError(
-        t('auth_error_userEmailCouldNotBeVerified')
-      );
+      throw new Error(t('auth_error_userEmailCouldNotBeVerified'));
 
     return createToken({ id: user.id, username: user.username }, 60 * 60);
   } catch (error) {
     console.log(error);
     // Sentry.captureException(error);
-    throw new AuthenticationError(error.message);
+    throw new Error(error.message);
   }
 };
 
@@ -121,19 +115,15 @@ export const resendVerificationToken = async (
     const user = await User.findOne({ email, username });
 
     if (!user)
-      throw new AuthenticationError(
-        t('auth_error_userHasNoSuchEmail', { username })
-      );
+      throw new Error(t('auth_error_userHasNoSuchEmail', { username }));
     // Sentry.configureScope((scope) => scope.setUser({ username, email }));
     if (user.isVerified)
-      throw new AuthenticationError(
-        t('auth_error_userAlreadyVerified', { username })
-      );
+      throw new Error(t('auth_error_userAlreadyVerified', { username }));
 
     sendVerificationEmail(user, t, nodemailerMailgun);
   } catch (error) {
     // Sentry.captureException(error);
-    throw new AuthenticationError(error.message);
+    throw new Error(error.message);
   }
 
   return {
@@ -157,7 +147,7 @@ export const createPasswordToken = async (
     );
 
     if (!currentUser)
-      throw new ApolloError(t('user_error_userCouldNotBeFound', { username }));
+      throw new Error(t('user_error_userCouldNotBeFound', { username }));
     // Sentry.configureScope((scope) => scope.setUser({ username: currentUser.username, email: currentUser.email }));
 
     await nodemailerMailgun.sendMail({
@@ -175,7 +165,7 @@ export const createPasswordToken = async (
     return { message: t('auth_success_passwordEmailSent') };
   } catch (error) {
     // Sentry.captureException(error);
-    throw new AuthenticationError(error.message);
+    throw new Error(error.message);
   }
 };
 
@@ -188,7 +178,7 @@ export const getPasswordToken = async (parent, args, { t /* , Sentry */ }) => {
   });
   try {
     // if (!currentUser)
-    //   throw new AuthenticationError(t('auth_error_passwordTokenInvalid'));
+    //   throw new Error(t('auth_error_passwordTokenInvalid'));
 
     const { id, username, email } = currentUser;
 
@@ -196,7 +186,7 @@ export const getPasswordToken = async (parent, args, { t /* , Sentry */ }) => {
     return createToken({ id, username, email }, 60 * 10);
   } catch (error) {
     console.log('Error', error);
-    throw new AuthenticationError(t('auth_error_passwordTokenInvalid'));
+    throw new Error(t('auth_error_passwordTokenInvalid'));
   }
 };
 
@@ -219,8 +209,7 @@ export const updatePassword = async (
       }
     );
 
-    if (!currentUser)
-      throw new AuthenticationError(t('auth_error_passwordTokenInvalid'));
+    if (!currentUser) throw new Error(t('auth_error_passwordTokenInvalid'));
 
     const { id, username, email } = currentUser;
     // Sentry.configureScope((scope) => scope.setUser({ username, email }));
@@ -234,7 +223,7 @@ export const updatePassword = async (
     return createToken({ id, username, email }, 60 * 10);
   } catch (error) {
     // Sentry.captureException(error);
-    throw new AuthenticationError(error.message);
+    throw new Error(error.message);
   }
 };
 

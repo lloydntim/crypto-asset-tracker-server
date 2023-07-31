@@ -1,4 +1,3 @@
-import { ApolloError } from 'apollo-server-express';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -36,7 +35,8 @@ export const sendVerificationEmail = async (
   } catch (error) {
     // console.log('Error', error);
     // Sentry.captureException(error);
-    throw new ApolloError(error);
+    // throw new ApolloError(error);
+    throw new Error(error);
   }
 };
 

@@ -1,4 +1,3 @@
-import { AuthenticationError } from 'apollo-server-express';
 import User from './UserModel';
 
 export const getUser = async (
@@ -8,7 +7,7 @@ export const getUser = async (
 ) => {
   // Sentry.configureScope((scope) => scope.setUser({ username: currentUser.username }));
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
 
   try {
     return id
@@ -16,16 +15,14 @@ export const getUser = async (
       : await User.findOne({ username }).select({ password: 0, __v: 0 });
   } catch (error) {
     // Sentry.captureException(error);
-    throw new AuthenticationError(
-      t('user_error_listCouldNotBeRetrieved', { id })
-    );
+    throw new Error(t('user_error_listCouldNotBeRetrieved', { id }));
   }
 };
 
 export const getUsers = async (parent, args, { currentUser, t, Sentry }) => {
   // Sentry.configureScope((scope) => scope.setUser({ username: currentUser.username }));
-  if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+  // if (!currentUser.loggedIn)
+  // throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
 
   try {
     return await User.find({}).select({ password: 0, __v: 0 });
@@ -37,7 +34,7 @@ export const getUsers = async (parent, args, { currentUser, t, Sentry }) => {
 
 export const updateUser = async (parent, { id, email }, { currentUser, t }) => {
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
 
   try {
     return await User.findByIdAndUpdate(
@@ -54,7 +51,7 @@ export const updateUser = async (parent, { id, email }, { currentUser, t }) => {
 export const removeUser = async (parent, args, { currentUser, t, Sentry }) => {
   // Sentry.configureScope((scope) => scope.setUser({ username: currentUser.username }));
   if (!currentUser.loggedIn)
-    throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+    throw new Error(t('auth_error_userMustBeLoggedIn'));
 
   try {
     // Returns removed user
