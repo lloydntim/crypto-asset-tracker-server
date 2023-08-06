@@ -1,5 +1,5 @@
 {
-  "name": "lncd-crypto-checker-server",
+  "name": "lncd-crypto-asset-tracker-server",
   "version": "1.0.0",
   "description": "",
   "main": "dist/server.js",
