@@ -12,7 +12,8 @@
     "watch-ts": "tsc -w",
     "build": "npm ci && npm run postinstall",
     "dev": "npm run watch-ts && npm run watch-node",
-    "postinstall": "tsc",
+    "tsc": "tsc",
+    "postinstall": "npm run tsc",
     "lint": "eslint . --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
