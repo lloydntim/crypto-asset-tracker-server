@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { mongoClientLogger } from './helpers/logger';
 
 import { domain, mongoOptions, mongoURI, port } from './config';
 
@@ -20,9 +21,9 @@ const main = async () => {
     mongoose.set('strictQuery', true);
     mongoose.connect(mongoURI, mongoOptions);
 
-    console.log(`🚀 Server is ready at ${domain}`);
+    mongoClientLogger.info(`🚀 Server is ready at ${domain}`);
   } catch (err) {
-    console.error('💀 Error starting the node server', err);
+    mongoClientLogger.error('💀 Error starting the node server', err);
   }
 };
 

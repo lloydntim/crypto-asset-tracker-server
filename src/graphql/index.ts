@@ -5,12 +5,11 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { ApolloServer } from '@apollo/server';
 
 // import { createCookies } from './helpers';
-import i18next from 'i18next';
+import { t } from 'i18next';
 
 import { typeDefs, resolvers } from './schema';
 
 import { GRAPHQL_ENDPOINT } from '../config';
-import { getCurrentUser } from '../middleware';
 
 interface MyContext {
   token?: string;
@@ -25,14 +24,13 @@ export const handleContext = async ({
   const token = headers.authorization
     ? headers.authorization.split(' ')[1]
     : '';
-  const { t } = i18next;
 
   // const cookies = createCookies(String(cookiesFallback));
   // const currentLanguage = /* i18next || */ cookies.i18next;
   // console.log('i18n', i18n.t);
   // i18next.changeLanguage(cookies?.i18next);
 
-  return { currentUser: getCurrentUser(token), t };
+  return { token, t };
 };
 
 export const applyApolloServer = async (app: Application) => {

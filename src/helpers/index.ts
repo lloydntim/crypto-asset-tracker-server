@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { fetchHTMLServiceLogger } from './logger';
 
 type CreateCookies<T> = (cookiesFallback: T) => { i18next?: string };
 
@@ -20,7 +21,7 @@ export const fetchHTML = async (url: string) => {
 
     return data;
   } catch (error) {
-    console.error(`Something went wrong, ${url} could not be retrieved.`);
-    // throw new Error(`Something went wrong, ${url} could not be retreived.`);
+    fetchHTMLServiceLogger.error(error);
+    throw new Error(`Something went wrong, ${url} could not be retreived.`);
   }
 };

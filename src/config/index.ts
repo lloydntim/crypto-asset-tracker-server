@@ -22,7 +22,7 @@ export const domain =
 export const clientUrl =
   NODE_ENV === 'development' ? CLIENT_DEV_URL : CLIENT_PROD_URL;
 
-export const cmcUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency';
+export const CMC_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency';
 
 export const mongoURI =
   NODE_ENV === 'development' ? MONGODB_DEV_URI : MONGODB_URI;

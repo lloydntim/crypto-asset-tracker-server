@@ -11,11 +11,9 @@ import User from '../user/UserModel';
 import Token from './TokenModel';
 
 import 'dotenv/config';
+import { appolloServiceLogger, mongoClientLogger } from '../../helpers/logger';
 
 const { NODE_ENV } = process.env;
-
-// const nodemailerMailgun = nodemailer.createTransport(mg(nodemailerAuthConfig));
-
 const transportConfig =
   NODE_ENV === 'development' ? mailhogConfig : mg(nodemailerAuthConfig);
 const nodemailerMailgun = nodemailer.createTransport(transportConfig);
@@ -23,9 +21,8 @@ const nodemailerMailgun = nodemailer.createTransport(transportConfig);
 export const register = async (
   parent,
   { username, email, password },
-  { t /*,  Sentry */ }
+  { t }
 ) => {
-  // Sentry.configureScope((scope) => scope.setUser({ username }));
   try {
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({ username, email, password: hash });
@@ -40,22 +37,15 @@ export const register = async (
 
     return createToken({ id: user.id, username }, 60 * 60);
   } catch (error) {
-    console.log('error', error);
-    // Sentry.captureException(error);
+    appolloServiceLogger.error(error);
     throw new Error(t('token_error_tokenCouldNotBeCreated'));
   }
 };
 
-export const login = async (
-  parent,
-  { username, password },
-  { t /* , Sentry */ }
-) => {
-  // Sentry.configureScope((scope) => scope.setUser({ username }));
+export const login = async (parent, { username, password }, { t }) => {
   try {
     const user = await User.findOne({ username });
 
-    console.log(username);
     if (!user)
       throw new Error(t('user_error_userCouldNotBeFound', { username }));
 
@@ -65,13 +55,12 @@ export const login = async (
 
     return createToken({ id: user.id, username }, '7d');
   } catch (error) {
-    // Sentry.captureException(error);
-    console.log('error', error);
+    mongoClientLogger.error(error);
     throw new Error(error.message);
   }
 };
 
-export const verify = async (parent, { token }, { t /* , Sentry */ }) => {
+export const verify = async (parent, { token }, { t }) => {
   try {
     const verificationToken = await Token.findOne({ token });
 
@@ -85,7 +74,6 @@ export const verify = async (parent, { token }, { t /* , Sentry */ }) => {
           userId: verificationToken.userId,
         })
       );
-    // Sentry.configureScope((scope) => scope.setUser({ username: user.username }));
     if (user.isVerified)
       throw new Error(
         t('auth_error_userAlreadyVerified', { username: user.username })
@@ -100,8 +88,7 @@ export const verify = async (parent, { token }, { t /* , Sentry */ }) => {
 
     return createToken({ id: user.id, username: user.username }, 60 * 60);
   } catch (error) {
-    console.log(error);
-    // Sentry.captureException(error);
+    appolloServiceLogger.error(error);
     throw new Error(error.message);
   }
 };
@@ -109,20 +96,19 @@ export const verify = async (parent, { token }, { t /* , Sentry */ }) => {
 export const resendVerificationToken = async (
   parent,
   { email, username },
-  { t /*  Sentry */ }
+  { t }
 ) => {
   try {
     const user = await User.findOne({ email, username });
 
     if (!user)
       throw new Error(t('auth_error_userHasNoSuchEmail', { username }));
-    // Sentry.configureScope((scope) => scope.setUser({ username, email }));
     if (user.isVerified)
       throw new Error(t('auth_error_userAlreadyVerified', { username }));
 
     sendVerificationEmail(user, t, nodemailerMailgun);
   } catch (error) {
-    // Sentry.captureException(error);
+    appolloServiceLogger.error(error);
     throw new Error(error.message);
   }
 
@@ -131,11 +117,7 @@ export const resendVerificationToken = async (
   };
 };
 
-export const createPasswordToken = async (
-  parent,
-  { username },
-  { t /* , Sentry */ }
-) => {
+export const createPasswordToken = async (parent, { username }, { t }) => {
   try {
     const resetPasswordToken = crypto.randomBytes(20).toString('hex');
     console.log('createPasswordToken - resetPasswordToken', resetPasswordToken);
@@ -148,7 +130,6 @@ export const createPasswordToken = async (
 
     if (!currentUser)
       throw new Error(t('user_error_userCouldNotBeFound', { username }));
-    // Sentry.configureScope((scope) => scope.setUser({ username: currentUser.username, email: currentUser.email }));
 
     await nodemailerMailgun.sendMail({
       to: currentUser.email,
@@ -164,28 +145,25 @@ export const createPasswordToken = async (
 
     return { message: t('auth_success_passwordEmailSent') };
   } catch (error) {
-    // Sentry.captureException(error);
+    appolloServiceLogger.error(error);
     throw new Error(error.message);
   }
 };
 
-export const getPasswordToken = async (parent, args, { t /* , Sentry */ }) => {
+export const getPasswordToken = async (parent, args, { t }) => {
   const { resetPasswordToken } = args;
-  console.log('getPasswordToken - resetPasswordToken', resetPasswordToken);
   const currentUser = await User.findOne({
     resetPasswordToken,
     resetPasswordExpires: { $gt: Date.now() },
   });
   try {
-    // if (!currentUser)
-    //   throw new Error(t('auth_error_passwordTokenInvalid'));
+    if (!currentUser) throw new Error(t('auth_error_passwordTokenInvalid'));
 
     const { id, username, email } = currentUser;
 
-    // Sentry.configureScope((scope) => scope.setUser({ username, email }));
     return createToken({ id, username, email }, 60 * 10);
   } catch (error) {
-    console.log('Error', error);
+    appolloServiceLogger.error(error);
     throw new Error(t('auth_error_passwordTokenInvalid'));
   }
 };
@@ -193,7 +171,7 @@ export const getPasswordToken = async (parent, args, { t /* , Sentry */ }) => {
 export const updatePassword = async (
   parents,
   { password, resetPasswordToken },
-  { t /* , Sentry */ }
+  { t }
 ) => {
   try {
     const hash = await bcrypt.hash(password, 10);
@@ -212,7 +190,7 @@ export const updatePassword = async (
     if (!currentUser) throw new Error(t('auth_error_passwordTokenInvalid'));
 
     const { id, username, email } = currentUser;
-    // Sentry.configureScope((scope) => scope.setUser({ username, email }));
+
     nodemailerMailgun.sendMail({
       to: email,
       from: 'password-reset@lloydntim.com',
@@ -222,7 +200,7 @@ export const updatePassword = async (
 
     return createToken({ id, username, email }, 60 * 10);
   } catch (error) {
-    // Sentry.captureException(error);
+    appolloServiceLogger.error(error);
     throw new Error(error.message);
   }
 };
