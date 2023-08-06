@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: 17.x
       - run: npm ci
-      - run: npm run postinstall --if-present
+      # - run: npm build --if-present
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
