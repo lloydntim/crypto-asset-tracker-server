@@ -15,7 +15,7 @@ export const PASSWORD_RESET_EMAIL = 'password-reset@lloydntim.com';
 export const sendVerificationEmail = async (
   { email, username, id }: { email?: string; username?: string; id?: string },
   t: TFunction,
-  { sendMail }
+  nodemailerMailgun
 ) => {
   try {
     const { token } = await Token.create({
@@ -23,7 +23,7 @@ export const sendVerificationEmail = async (
       token: crypto.randomBytes(20).toString('hex'),
     });
 
-    await sendMail({
+    await nodemailerMailgun.sendMail({
       to: email,
       from: SENDER_EMAIL,
       subject: t('auth_email_subject_emailVerification'),
