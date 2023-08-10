@@ -26,9 +26,8 @@ export const getUsers = async (parent, args, { token, t }) => {
   }
 };
 
-export const updateUser = async (parent, { id, email }, { currentUser, t }) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+export const updateUser = async (parent, { id, email }, { token, t }) => {
+  authenticateUser(token);
 
   try {
     return await User.findByIdAndUpdate(
