@@ -1,3 +1,4 @@
+import { InternalServerException } from '../../graphql/errors';
 import { mongoClientLogger } from '../../helpers/logger';
 import { authenticateUser } from '../../middleware';
 import User from './UserModel';
@@ -11,7 +12,9 @@ export const getUser = async (parent, { id, username }, { token, t }) => {
       : await User.findOne({ username }).select({ password: 0, __v: 0 });
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('user_error_listCouldNotBeRetrieved', { id }));
+    throw new InternalServerException(
+      t('user_error_listCouldNotBeRetrieved', { id })
+    );
   }
 };
 
@@ -22,7 +25,7 @@ export const getUsers = async (parent, args, { token, t }) => {
     return await User.find({}).select({ password: 0, __v: 0 });
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('user_error_usersCouldNotBeRetrieved'));
+    throw new InternalServerException(t('user_error_usersCouldNotBeRetrieved'));
   }
 };
 
@@ -37,7 +40,7 @@ export const updateUser = async (parent, { id, email }, { token, t }) => {
     ).select({ password: 0, __v: 0 });
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('user_error_userCouldNotBeUpdated'));
+    throw new InternalServerException(t('user_error_userCouldNotBeUpdated'));
   }
 };
 
@@ -49,7 +52,7 @@ export const removeUser = async (parent, args, { token, t }) => {
     return User.findOneAndRemove({ _id: args.id });
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('user_error_userCouldNotBeRemoved'));
+    throw new InternalServerException(t('user_error_userCouldNotBeRemoved'));
   }
 };
 

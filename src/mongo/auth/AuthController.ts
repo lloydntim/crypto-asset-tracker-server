@@ -12,6 +12,13 @@ import Token from './TokenModel';
 
 import 'dotenv/config';
 import { appolloServiceLogger, mongoClientLogger } from '../../helpers/logger';
+import {
+  BadRequestException,
+  ConflictException,
+  InternalServerException,
+  NotFoundException,
+  UnauthorizedException,
+} from '../../graphql/errors';
 
 const { NODE_ENV } = process.env;
 const transportConfig =
@@ -31,14 +38,15 @@ export const register = async (
       token: crypto.randomBytes(20).toString('hex'),
     });
 
-    if (!vToken) throw new Error(t('token_error_tokenCouldNotBeCreated'));
+    if (!vToken)
+      throw new BadRequestException(t('token_error_tokenCouldNotBeCreated'));
 
     sendVerificationEmail(user, t, nodemailerMailgun);
 
     return createToken({ id: user.id, username }, 60 * 60);
   } catch (error) {
     appolloServiceLogger.error(error);
-    throw new Error(t('token_error_tokenCouldNotBeCreated'));
+    throw new BadRequestException(t('token_error_tokenCouldNotBeCreated'));
   }
 };
 
@@ -47,16 +55,19 @@ export const login = async (parent, { username, password }, { t }) => {
     const user = await User.findOne({ username });
 
     if (!user)
-      throw new Error(t('user_error_userCouldNotBeFound', { username }));
+      throw new BadRequestException(
+        t('user_error_userCouldNotBeFound', { username })
+      );
 
     const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) throw new Error(t('auth_error_incorrectPassword'));
+    if (!isMatch)
+      throw new UnauthorizedException(t('auth_error_incorrectPassword'));
 
     return createToken({ id: user.id, username }, '7d');
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(error.message);
+    throw new InternalServerException(error);
   }
 };
 
@@ -64,18 +75,20 @@ export const verify = async (parent, { token }, { t }) => {
   try {
     const verificationToken = await Token.findOne({ token });
 
-    if (!verificationToken) throw new Error(t('token_error_tokenNotValid'));
+    if (!verificationToken)
+      throw new UnauthorizedException(t('token_error_tokenNotValid'));
 
     const user = await User.findOne({ _id: verificationToken.userId });
 
     if (!user)
-      throw new Error(
+      throw new NotFoundException(
         t('user_error_userWithIdCouldNotBeFound', {
           userId: verificationToken.userId,
         })
       );
+
     if (user.isVerified)
-      throw new Error(
+      throw new ConflictException(
         t('auth_error_userAlreadyVerified', { username: user.username })
       );
 
@@ -84,12 +97,14 @@ export const verify = async (parent, { token }, { t }) => {
     const updatedUser = await user.save();
 
     if (!updatedUser)
-      throw new Error(t('auth_error_userEmailCouldNotBeVerified'));
+      throw new InternalServerException(
+        t('auth_error_userEmailCouldNotBeVerified')
+      );
 
     return createToken({ id: user.id, username: user.username }, 60 * 60);
   } catch (error) {
     appolloServiceLogger.error(error);
-    throw new Error(error.message);
+    throw new InternalServerException(error.message);
   }
 };
 
@@ -102,14 +117,18 @@ export const resendVerificationToken = async (
     const user = await User.findOne({ email, username });
 
     if (!user)
-      throw new Error(t('auth_error_userHasNoSuchEmail', { username }));
+      throw new NotFoundException(
+        t('auth_error_userHasNoSuchEmail', { username })
+      );
     if (user.isVerified)
-      throw new Error(t('auth_error_userAlreadyVerified', { username }));
+      throw new ConflictException(
+        t('auth_error_userAlreadyVerified', { username })
+      );
 
     sendVerificationEmail(user, t, nodemailerMailgun);
   } catch (error) {
     appolloServiceLogger.error(error);
-    throw new Error(error.message);
+    throw new InternalServerException(error.message);
   }
 
   return {
@@ -120,8 +139,6 @@ export const resendVerificationToken = async (
 export const createPasswordToken = async (parent, { username }, { t }) => {
   try {
     const resetPasswordToken = crypto.randomBytes(20).toString('hex');
-    console.log('createPasswordToken - resetPasswordToken', resetPasswordToken);
-    console.log('createPasswordToken - username', username);
     const currentUser = await User.findOneAndUpdate(
       { username },
       { resetPasswordToken, resetPasswordExpires: Date.now() + 3600000 },
@@ -129,7 +146,9 @@ export const createPasswordToken = async (parent, { username }, { t }) => {
     );
 
     if (!currentUser)
-      throw new Error(t('user_error_userCouldNotBeFound', { username }));
+      throw new NotFoundException(
+        t('user_error_userCouldNotBeFound', { username })
+      );
 
     await nodemailerMailgun.sendMail({
       to: currentUser.email,
@@ -146,7 +165,7 @@ export const createPasswordToken = async (parent, { username }, { t }) => {
     return { message: t('auth_success_passwordEmailSent') };
   } catch (error) {
     appolloServiceLogger.error(error);
-    throw new Error(error.message);
+    throw new InternalServerException(error.message);
   }
 };
 
@@ -157,14 +176,15 @@ export const getPasswordToken = async (parent, args, { t }) => {
     resetPasswordExpires: { $gt: Date.now() },
   });
   try {
-    if (!currentUser) throw new Error(t('auth_error_passwordTokenInvalid'));
+    if (!currentUser)
+      throw new ConflictException(t('auth_error_passwordTokenInvalid'));
 
     const { id, username, email } = currentUser;
 
     return createToken({ id, username, email }, 60 * 10);
   } catch (error) {
     appolloServiceLogger.error(error);
-    throw new Error(t('auth_error_passwordTokenInvalid'));
+    throw new InternalServerException(t('auth_error_passwordTokenInvalid'));
   }
 };
 
@@ -187,7 +207,8 @@ export const updatePassword = async (
       }
     );
 
-    if (!currentUser) throw new Error(t('auth_error_passwordTokenInvalid'));
+    if (!currentUser)
+      throw new NotFoundException(t('auth_error_passwordTokenInvalid'));
 
     const { id, username, email } = currentUser;
 
@@ -201,7 +222,7 @@ export const updatePassword = async (
     return createToken({ id, username, email }, 60 * 10);
   } catch (error) {
     appolloServiceLogger.error(error);
-    throw new Error(error.message);
+    throw new InternalServerException(error.message);
   }
 };
 

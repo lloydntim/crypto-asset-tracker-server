@@ -4,31 +4,29 @@ import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { ApolloServer } from '@apollo/server';
 
-// import { createCookies } from './helpers';
-import { t } from 'i18next';
+import { createCookies } from '../helpers';
+
+import { t, changeLanguage } from 'i18next';
 
 import { typeDefs, resolvers } from './schema';
 
 import { GRAPHQL_ENDPOINT } from '../config';
+import { InternalServerException } from './errors';
 
 interface MyContext {
   token?: string;
 }
 
-export const handleContext = async ({
-  req: {
-    headers,
-    //  custom: {cookiesFallback },  cookies: { i18next }
-  },
-}) => {
+export const handleContext = async ({ req: { headers } }) => {
+  const i18nextCookies = headers.cookies ?? '';
+  const cookies = createCookies(i18nextCookies);
+
   const token = headers.authorization
     ? headers.authorization.split(' ')[1]
     : '';
+  const currentLanguage = cookies.i18next || 'en';
 
-  // const cookies = createCookies(String(cookiesFallback));
-  // const currentLanguage = /* i18next || */ cookies.i18next;
-  // console.log('i18n', i18n.t);
-  // i18next.changeLanguage(cookies?.i18next);
+  changeLanguage(currentLanguage);
 
   return { token, t };
 };
@@ -40,6 +38,13 @@ export const applyApolloServer = async (app: Application) => {
     typeDefs,
     resolvers,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    formatError: (err) => {
+      if (err.message.includes('Response')) {
+        return new InternalServerException(t('common_error_internalServer'));
+      }
+
+      return err;
+    },
   });
 
   await server.start();

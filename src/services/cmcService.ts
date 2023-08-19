@@ -3,6 +3,7 @@ import { CMC_URL } from '../config';
 import { CMC_API_KEY } from '../config/credentials';
 import { cmcServiceLogger } from '../helpers/logger';
 import { t } from 'i18next';
+import { BadRequestException } from '../graphql/errors';
 
 const headers = {
   'X-CMC_PRO_API_KEY': CMC_API_KEY,
@@ -21,7 +22,7 @@ export const getLatestCoinListings = async () => {
     return response.data.data;
   } catch (error) {
     cmcServiceLogger.error(error);
-    throw new Error(t('coin_error_listingCouldNotBeRetrieved'));
+    throw new BadRequestException(t('coin_error_listingCouldNotBeRetrieved'));
   }
 };
 
@@ -37,6 +38,6 @@ export const getLatestCoinQuotes = async (params) => {
     return response.data.data;
   } catch (error) {
     cmcServiceLogger.error(error);
-    throw new Error(t('coin_error_quotesCouldNotBeRetrieved'));
+    throw new BadRequestException(t('coin_error_quotesCouldNotBeRetrieved'));
   }
 };

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { fetchHTMLServiceLogger } from './logger';
+import { BadRequestException } from '../graphql/errors';
 
 type CreateCookies<T> = (cookiesFallback: T) => { i18next?: string };
 
@@ -22,6 +23,6 @@ export const fetchHTML = async (url: string) => {
     return data;
   } catch (error) {
     fetchHTMLServiceLogger.error(error);
-    throw new Error(`Something went wrong, ${url} could not be retreived.`);
+    throw new BadRequestException();
   }
 };

@@ -11,6 +11,10 @@ import {
   getLatestCoinQuotes,
 } from '../../services/cmcService';
 import { authenticateUser } from '../../middleware';
+import {
+  InternalServerException,
+  NotFoundException,
+} from '../../graphql/errors';
 
 export const getCoin = async (parent, { coinId }, { token, t }) => {
   authenticateUser(token);
@@ -19,7 +23,7 @@ export const getCoin = async (parent, { coinId }, { token, t }) => {
     return await Coin.findOne({ coinId });
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('Coin_error_listCouldNotBeRetrieved'));
+    throw new NotFoundException(t('Coin_error_listCouldNotBeRetrieved'));
   }
 };
 
@@ -50,7 +54,7 @@ export const getCoinListings = async (
     );
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('coin_listing_error_listingouldNotBeRetrieved'));
+    throw new NotFoundException(t('coin_error_listingCouldNotBeRetrieved'));
   }
 };
 
@@ -61,7 +65,9 @@ export const getCoins = async (parent, { creatorId }, { token, t }) => {
     return (await creatorId) ? Coin.find({ creatorId }) : Coin.find({});
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('coin_error_listCouldNotBeRetrieved'));
+    throw new NotFoundException(
+      t('coin_error_listCouldNotBeRetrieved', creatorId)
+    );
   }
 };
 
@@ -90,7 +96,7 @@ export const addCoin = async (
     });
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('coin_error_listCouldNotBeAdded'));
+    throw new InternalServerException(t('coin_error_listCouldNotBeAdded'));
   }
 };
 
@@ -104,7 +110,8 @@ export const updateCoin = async (parent, { coinId, holding }, { token, t }) => {
       { new: true }
     );
   } catch (error) {
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    mongoClientLogger.error(error);
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
@@ -119,7 +126,7 @@ export const removeCoin = async (parent, args, { token, t }) => {
       : await Coin.findOneAndDelete({ _id });
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('coin_error_listCouldNotBeRemoved'));
+    throw new InternalServerException(t('coin_error_listCouldNotBeRemoved'));
   }
 };
 
@@ -135,7 +142,7 @@ export const addCoinHolding = async (parent, { id, holding }, { token, t }) => {
       { new: true }
     );
   } catch (error) {
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
@@ -159,7 +166,7 @@ export const updateCoinHolding = async (
     );
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
@@ -178,7 +185,7 @@ export const removeCoinHolding = async (
     );
   } catch (error) {
     mongoClientLogger.error(error);
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
@@ -194,7 +201,9 @@ const fetchHTML = async (url: string) => {
     return data;
   } catch (error) {
     fetchHTMLServiceLogger.error(error);
-    throw new Error(`Something went wrong, ${url} could not be retrieved.`);
+    throw new InternalServerException(
+      `Something went wrong, ${url} could not be retrieved.`
+    );
   }
 };
 
@@ -207,7 +216,9 @@ export const getSymbols = async (parent, _, { token, t }) => {
     return listings.map(({ name, symbol }) => ({ id: symbol, name }));
   } catch (error) {
     cmcServiceLogger.error(error);
-    throw new Error(t('coin_error_listCouldNotBeRetrieved'));
+    throw new InternalServerException(
+      t('coin_error_listingCouldNotBeRetrieved')
+    );
   }
 };
 
@@ -234,7 +245,9 @@ export const getExchanges = async (parent, _, { token, t }) => {
     return exchanges;
   } catch (error) {
     fetchHTMLServiceLogger.error(error);
-    throw new Error(t('coin_error_listCouldNotBeRetrieved'));
+    throw new InternalServerException(
+      t('coin_error_exchangesCouldNotBeRetrieved')
+    );
   }
 };
 
