@@ -34,5 +34,14 @@
   "translate_error_invalidWord": "Invalid word.",
   "translate_error_couldNotBeTranslated": "This text could not be translated.",
   "common_success_fileSuccessfullyProcessed": "File successfully processed.",
-  "common_success_fileStreamClosed": "File stream closed."
+  "common_success_fileStreamClosed": "File stream closed.",
+  "common_error_bad_request": "The server can’t return a response due to an error by the client",
+  "common_error_unauthorized": "The client is not authorised",
+  "common_error_forbidden": "The client does not have access rights to the content",
+  "common_error_conflict": "There is a conflict with the current state of the server",
+  "common_error_notFound": "The server cannot find the requested resource",
+  "common_error_internalServer": "The server cannot handle your request",
+  "common_error_notImplemented": "The server does not support the functionality for the request",
+  "common_error_badGateway": "The request has taken to long",
+  "common_error_serviceUnavailable": "The server is unavailable to handle this request"
 }

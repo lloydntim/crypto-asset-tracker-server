@@ -7,6 +7,7 @@ import { jwtSecret } from '../../config/credentials';
 import Token from './TokenModel';
 import { appolloServiceLogger } from '../../helpers/logger';
 import { TFunction } from 'i18next';
+import { InternalServerException } from '../../graphql/errors';
 
 export const SENDER_EMAIL = 'email-verification@crypt-oasset-tracker.com';
 export const VERIFICATION_EMAIL = 'email-verification@lloydntim.com';
@@ -36,7 +37,7 @@ export const sendVerificationEmail = async (
     });
   } catch (error) {
     appolloServiceLogger.error(error);
-    throw new Error(error);
+    throw new InternalServerException(error);
   }
 };
 
