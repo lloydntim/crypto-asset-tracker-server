@@ -23,8 +23,6 @@ export const fetchHTML = async (url: string) => {
     return data;
   } catch (error) {
     fetchHTMLServiceLogger.error(error);
-    throw new BadRequestException(
-      `Something went wrong, ${url} could not be retreived.`
-    );
+    throw new BadRequestException();
   }
 };
