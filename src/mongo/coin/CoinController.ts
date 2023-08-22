@@ -71,6 +71,64 @@ export const getCoins = async (parent, { creatorId }, { token, t }) => {
   }
 };
 
+export const getCoinsList = async (
+  parent,
+  { creatorId, symbols, convert },
+  { token, t }
+) => {
+  authenticateUser(token);
+
+  try {
+    const quotes = await getLatestCoinQuotes({
+      symbol: symbols,
+      convert,
+    });
+
+    const coinListings = Object.values(quotes).map(
+      ({
+        name,
+        id,
+        symbol,
+        quote: {
+          [convert]: { price },
+        },
+      }: any) => ({ price, id, name, symbol })
+    );
+
+    const coins = (await creatorId) ? Coin.find({ creatorId }) : Coin.find({});
+
+    const coinList = (userCoins, coinListing) => {
+      // merge response data to get coin list here
+
+      userCoins.map();
+
+      return {
+        portfolioTotal: (a?.portfolioTotal || 0) + (assets.value ?? 0),
+        coins: [
+          ...(a.coins ?? []),
+          {
+            id,
+            coinId,
+            name,
+            symbol,
+            price: price || 0,
+            amount: assets.amount,
+            value: assets.amount * b.price || 0,
+            assets,
+          },
+        ],
+      };
+    };
+
+    return coinList(coins, coinListings);
+  } catch (error) {
+    mongoClientLogger.error(error);
+    throw new NotFoundException(
+      t('coin_error_listCouldNotBeRetrieved', creatorId)
+    );
+  }
+};
+
 export const addCoin = async (
   parent,
   { symbol, slug, creatorId },
