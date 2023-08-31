@@ -7,7 +7,6 @@ export const authenticateUser = (token) => {
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET);
     appolloServiceLogger.info(user);
-    console.log(user);
 
     return user;
   } catch (error) {

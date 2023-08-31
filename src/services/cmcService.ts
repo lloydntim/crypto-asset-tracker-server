@@ -21,7 +21,7 @@ export const getLatestCoinListings = async () => {
     });
     return response.data.data;
   } catch (error) {
-    cmcServiceLogger.error(error);
+    cmcServiceLogger.error(error.message);
     throw new BadRequestException(t('coin_error_listingCouldNotBeRetrieved'));
   }
 };
@@ -37,7 +37,16 @@ export const getLatestCoinQuotes = async (params) => {
 
     return response.data.data;
   } catch (error) {
-    cmcServiceLogger.error(error);
-    throw new BadRequestException(t('coin_error_quotesCouldNotBeRetrieved'));
+    if (error.response) {
+      cmcServiceLogger.error(error.response.data);
+      cmcServiceLogger.error(error.response.status);
+    } else if (error.request) {
+      // Request made but no response is received from the server.
+      cmcServiceLogger.error(error.request);
+    } else {
+      // Error occured while setting up the request
+      cmcServiceLogger.error(error.message);
+      throw new BadRequestException(t('coin_error_quotesCouldNotBeRetrieved'));
+    }
   }
 };

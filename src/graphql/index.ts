@@ -4,7 +4,7 @@ import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { ApolloServer } from '@apollo/server';
 
-import { createCookies } from '../helpers';
+import { createObjectFromCookies } from '../helpers';
 
 import { t, changeLanguage } from 'i18next';
 
@@ -19,7 +19,7 @@ interface MyContext {
 
 export const handleContext = async ({ req: { headers } }) => {
   const i18nextCookies = headers.cookies ?? '';
-  const cookies = createCookies(i18nextCookies);
+  const cookies = createObjectFromCookies(i18nextCookies);
 
   const token = headers.authorization
     ? headers.authorization.split(' ')[1]
