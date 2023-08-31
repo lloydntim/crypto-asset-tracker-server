@@ -15,6 +15,7 @@ import {
   InternalServerException,
   NotFoundException,
 } from '../../graphql/errors';
+import createCoinList from '../../helpers/createCoinList';
 
 export const getCoin = async (parent, { coinId }, { token, t }) => {
   authenticateUser(token);
@@ -32,7 +33,7 @@ export const getCoinListings = async (
   { symbols, convert },
   { token, t }
 ) => {
-  authenticateUser(token);
+  // authenticateUser(token);
 
   if (!symbols) return [];
 
@@ -44,8 +45,8 @@ export const getCoinListings = async (
 
     return Object.values(quotes).map(
       ({
-        name,
         id,
+        name,
         symbol,
         quote: {
           [convert]: { price },
@@ -66,65 +67,36 @@ export const getCoins = async (parent, { creatorId }, { token, t }) => {
   } catch (error) {
     mongoClientLogger.error(error);
     throw new NotFoundException(
-      t('coin_error_listCouldNotBeRetrieved', creatorId)
+      t('coin_error_listCouldNotBeRetrieved', { creatorId })
     );
   }
 };
 
-export const getCoinsList = async (
+export const getCoinList = async (
   parent,
-  { creatorId, symbols, convert },
+  { creatorId, convert },
   { token, t }
 ) => {
   authenticateUser(token);
 
   try {
+    const coins = await Coin.find({ ...(creatorId && { creatorId }) });
+
+    const symbolParams = coins.map((coin) => coin.symbol).join(',');
+
     const quotes = await getLatestCoinQuotes({
-      symbol: symbols,
+      symbol: symbolParams,
       convert,
     });
 
-    const coinListings = Object.values(quotes).map(
-      ({
-        name,
-        id,
-        symbol,
-        quote: {
-          [convert]: { price },
-        },
-      }: any) => ({ price, id, name, symbol })
-    );
-
-    const coins = (await creatorId) ? Coin.find({ creatorId }) : Coin.find({});
-
-    const coinList = (userCoins, coinListing) => {
-      // merge response data to get coin list here
-
-      userCoins.map();
-
-      return {
-        portfolioTotal: (a?.portfolioTotal || 0) + (assets.value ?? 0),
-        coins: [
-          ...(a.coins ?? []),
-          {
-            id,
-            coinId,
-            name,
-            symbol,
-            price: price || 0,
-            amount: assets.amount,
-            value: assets.amount * b.price || 0,
-            assets,
-          },
-        ],
-      };
-    };
-
-    return coinList(coins, coinListings);
+    return createCoinList(coins, quotes, convert);
   } catch (error) {
-    mongoClientLogger.error(error);
+    mongoClientLogger.error(
+      'coin_error_listCouldNotBeRetrieved',
+      error.message
+    );
     throw new NotFoundException(
-      t('coin_error_listCouldNotBeRetrieved', creatorId)
+      t('coin_error_listCouldNotBeRetrieved', { creatorId })
     );
   }
 };
@@ -310,6 +282,7 @@ export const getExchanges = async (parent, _, { token, t }) => {
 };
 
 export default {
+  getCoinList,
   getCoinListings,
   getCoin,
   getCoins,

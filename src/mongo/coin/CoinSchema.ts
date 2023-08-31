@@ -1,18 +1,28 @@
 import { Schema, Model, Types, SchemaDefinitionProperty } from 'mongoose';
 
-interface Holding {
-  slug: string;
-  name: string;
-  type: 'wallet' | 'staking' | 'exchange';
-  amount: number;
-  holdingId: string;
-  currency: string;
-  ownerId: string;
+enum HoldingStorageTypes {
+  WALLET = 'wallet',
+  EXCHANGE = 'exchange',
+  STAKING = 'staking',
 }
 
-interface Coin {
+type HoldingStorageType = `${HoldingStorageTypes}`;
+export interface Holding {
+  id: SchemaDefinitionProperty<Types.ObjectId>;
+  slug?: string;
+  name: string;
+  type: HoldingStorageType;
+  amount: number;
+  value?: number;
+  holdingId?: string;
+  currency?: string;
+  ownerId?: string;
+}
+
+export interface Coin {
+  id: SchemaDefinitionProperty<Types.ObjectId>;
   symbol: string;
-  holdings: [Holding];
+  holdings: Holding[];
   name: string;
   creatorId: SchemaDefinitionProperty<Types.ObjectId>;
   coinId: string;
