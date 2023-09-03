@@ -19,7 +19,7 @@ import {
   addCoinHolding,
   updateCoinHolding,
   removeCoinHolding,
-  getSymbols,
+  getCoinSymbols,
   getExchanges,
 } from '../mongo/coin/CoinController';
 
@@ -119,7 +119,7 @@ export const typeDefs = `
     price: String
   }
 
-  type Symbol {
+  type CoinSymbol {
     id: ID
     name: String
   }
@@ -142,7 +142,7 @@ export const typeDefs = `
     getCoins(creatorId: ID): [Coin]
     getCoin(coinId: ID!): Coin
 
-    getSymbols: [Symbol]
+    getCoinSymbols: [CoinSymbol]
     getExchanges: [Exchange]
   }
 
@@ -180,7 +180,7 @@ export const resolvers = {
     getCoinListings,
     getCoin,
     getCoins,
-    getSymbols,
+    getCoinSymbols,
     getExchanges,
   },
   Mutation: {
