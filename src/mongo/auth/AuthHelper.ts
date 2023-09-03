@@ -1,7 +1,7 @@
 import crypto, { JsonWebKey } from 'crypto';
 import jwt from 'jsonwebtoken';
 
-import { clientUrl } from '../../config';
+import { CLIENT_DOMAIN } from '../../config';
 import { jwtSecret } from '../../config/credentials';
 
 import Token from './TokenModel';
@@ -30,7 +30,7 @@ export const sendVerificationEmail = async (
       subject: t('auth_email_subject_emailVerification'),
       text: t('auth_email_content_emailVerificationMessage', {
         username,
-        domain: clientUrl,
+        domain: CLIENT_DOMAIN,
         token,
         interpolation: { escapeValue: false },
       }),
