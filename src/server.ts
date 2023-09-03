@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { mongoClientLogger } from './helpers/logger';
 
-import { domain, mongoOptions, mongoURI, port } from './config';
+import { DOMAIN, MONGODB_URI, PORT } from './config';
 
 import app from './app';
 import { applyApolloServer } from './graphql';
@@ -16,12 +16,12 @@ const listen = async (port: string) => {
 
 const main = async () => {
   try {
-    await listen(port);
+    await listen(PORT);
 
     mongoose.set('strictQuery', true);
-    mongoose.connect(mongoURI, mongoOptions);
+    mongoose.connect(MONGODB_URI);
 
-    mongoClientLogger.info(`🚀 Server is ready at ${domain}`);
+    mongoClientLogger.info(`🚀 Server is ready at ${DOMAIN}`);
   } catch (err) {
     mongoClientLogger.error('💀 Error starting the node server', err);
   }

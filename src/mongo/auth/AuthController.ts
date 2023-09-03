@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import mg from 'nodemailer-mailgun-transport';
 
-import { clientUrl } from '../../config';
+import { CLIENT_DOMAIN } from '../../config';
 import { mailhogConfig, nodemailerAuthConfig } from '../../config/credentials';
 import { sendVerificationEmail, createToken } from './AuthHelper';
 
@@ -157,7 +157,7 @@ export const createPasswordToken = async (parent, { username }, { t }) => {
       text: t('auth_email_content_passwordResetMessage', {
         username: currentUser.username,
         resetPasswordToken,
-        domain: clientUrl,
+        domain: CLIENT_DOMAIN,
         interpolation: { escapeValue: false },
       }),
     });
