@@ -109,18 +109,18 @@ export const addCoin = async (
   authenticateUser(token);
 
   try {
-    let coinSymbol = symbol;
+    let coinCoinSymbol = symbol;
 
     if (slug) {
       const quotes = await getLatestCoinQuotes({ slug });
       const [newCoin]: any[] = Object.values(quotes);
 
-      coinSymbol = newCoin.symbol;
+      coinCoinSymbol = newCoin.symbol;
     }
 
     // make sure user exists.
     return await Coin.create({
-      symbol: coinSymbol,
+      symbol: coinCoinSymbol,
       creatorId,
       holdings: [],
     });
@@ -237,7 +237,7 @@ const fetchHTML = async (url: string) => {
   }
 };
 
-export const getSymbols = async (parent, _, { token, t }) => {
+export const getCoinSymbols = async (parent, _, { token, t }) => {
   authenticateUser(token);
 
   try {
@@ -292,5 +292,5 @@ export default {
   addCoinHolding,
   updateCoinHolding,
   removeCoinHolding,
-  getSymbols,
+  getCoinSymbols,
 };
