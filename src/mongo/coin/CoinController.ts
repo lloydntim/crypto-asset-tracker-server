@@ -1,45 +1,52 @@
 import * as cheerio from 'cheerio';
 import axios from 'axios';
-import { cmcUrl } from '../../config';
-import { cmcApiKey } from '../../config/credentials';
 import Coin from './CoinModel';
+import {
+  cmcServiceLogger,
+  fetchHTMLServiceLogger,
+  mongoClientLogger,
+} from '../../helpers/logger';
+import {
+  getLatestCoinListings,
+  getLatestCoinQuotes,
+} from '../../services/cmcService';
+import { authenticateUser } from '../../middleware';
+import {
+  InternalServerException,
+  NotFoundException,
+} from '../../graphql/errors';
+import createCoinList from '../../helpers/createCoinList';
 
-export const getCoin = async (parent, { coinId }, { currentUser, t }) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+export const getCoin = async (parent, { coinId }, { token, t }) => {
+  authenticateUser(token);
 
   try {
     return await Coin.findOne({ coinId });
   } catch (error) {
-    throw new Error(t('Coin_error_listCouldNotBeRetrieved'));
+    mongoClientLogger.error(error);
+    throw new NotFoundException(t('Coin_error_listCouldNotBeRetrieved'));
   }
 };
 
 export const getCoinListings = async (
   parent,
   { symbols, convert },
-  { currentUser, t }
+  { token, t }
 ) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+  // authenticateUser(token);
 
   if (!symbols) return [];
+
   try {
-    const url = `${cmcUrl}/quotes/latest`;
-    const response = await axios.get(url, {
-      headers: {
-        'X-CMC_PRO_API_KEY': cmcApiKey,
-      },
-      params: {
-        symbol: symbols,
-        convert,
-      },
+    const quotes = await getLatestCoinQuotes({
+      symbol: symbols,
+      convert,
     });
 
-    return Object.values(response.data.data).map(
+    return Object.values(quotes).map(
       ({
-        name,
         id,
+        name,
         symbol,
         quote: {
           [convert]: { price },
@@ -47,70 +54,85 @@ export const getCoinListings = async (
       }: any) => ({ price, id, name, symbol })
     );
   } catch (error) {
-    console.log('error', error);
+    mongoClientLogger.error(error);
+    throw new NotFoundException(t('coin_error_listingCouldNotBeRetrieved'));
   }
 };
 
-export const getCoins = async (parent, { creatorId }, { currentUser, t }) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+// TODO: change name from creatorId to createdBy / createdByUserId
+export const getCoins = async (parent, { creatorId }, { token, t }) => {
+  authenticateUser(token);
   try {
     return (await creatorId) ? Coin.find({ creatorId }) : Coin.find({});
   } catch (error) {
-    throw new Error(t('coin_error_listCouldNotBeRetrieved'));
+    mongoClientLogger.error(error);
+    throw new NotFoundException(
+      t('coin_error_listCouldNotBeRetrieved', { creatorId })
+    );
+  }
+};
+
+export const getCoinList = async (
+  parent,
+  { creatorId, convert },
+  { token, t }
+) => {
+  authenticateUser(token);
+
+  try {
+    const coins = await Coin.find({ ...(creatorId && { creatorId }) });
+
+    const symbolParams = coins.map((coin) => coin.symbol).join(',');
+
+    const quotes = await getLatestCoinQuotes({
+      symbol: symbolParams,
+      convert,
+    });
+
+    return createCoinList(coins, quotes, convert);
+  } catch (error) {
+    mongoClientLogger.error(
+      'coin_error_listCouldNotBeRetrieved',
+      error.message
+    );
+    throw new NotFoundException(
+      t('coin_error_listCouldNotBeRetrieved', { creatorId })
+    );
   }
 };
 
 export const addCoin = async (
   parent,
   { symbol, slug, creatorId },
-  { currentUser, t }
+  { token, t }
 ) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+  authenticateUser(token);
 
   try {
-    let coinSymbol = symbol;
+    let coinCoinSymbol = symbol;
 
     if (slug) {
-      const url = `${cmcUrl}/quotes/latest`;
-      const response = await axios
-        .get(url, {
-          headers: {
-            'X-CMC_PRO_API_KEY': cmcApiKey,
-          },
-          params: {
-            slug,
-          },
-        })
-        .catch((error) => {
-          console.log(error);
-          throw new Error(t('Coin does not seem to exist'));
-        });
+      const quotes = await getLatestCoinQuotes({ slug });
+      const [newCoin]: any[] = Object.values(quotes);
 
-      const [newCoin]: any[] = Object.values(response.data.data);
-      coinSymbol = newCoin.symbol;
+      coinCoinSymbol = newCoin.symbol;
     }
 
+    // make sure user exists.
     return await Coin.create({
-      // coinId: `${creatorId}-${symbol}`.toLowerCase(),
-      symbol: coinSymbol,
+      symbol: coinCoinSymbol,
       creatorId,
       holdings: [],
     });
   } catch (error) {
-    console.log('error', error);
-    throw new Error(t('coin_error_listCouldNotBeAdded'));
+    mongoClientLogger.error(error);
+    throw new InternalServerException(t('coin_error_listCouldNotBeAdded'));
   }
 };
 
-export const updateCoin = async (
-  parent,
-  { coinId, holding },
-  { currentUser, t }
-) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+export const updateCoin = async (parent, { coinId, holding }, { token, t }) => {
+  authenticateUser(token);
+
   try {
     return await Coin.findOneAndUpdate(
       { coinId },
@@ -118,13 +140,14 @@ export const updateCoin = async (
       { new: true }
     );
   } catch (error) {
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    mongoClientLogger.error(error);
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
-export const removeCoin = async (parent, args, { currentUser, t }) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+export const removeCoin = async (parent, args, { token, t }) => {
+  authenticateUser(token);
+
   try {
     const { id: _id, creatorId } = args;
 
@@ -132,17 +155,14 @@ export const removeCoin = async (parent, args, { currentUser, t }) => {
       ? await Coin.deleteMany({ creatorId })
       : await Coin.findOneAndDelete({ _id });
   } catch (error) {
-    throw new Error(t('coin_error_listCouldNotBeRemoved'));
+    mongoClientLogger.error(error);
+    throw new InternalServerException(t('coin_error_listCouldNotBeRemoved'));
   }
 };
 
-export const addCoinHolding = async (
-  parent,
-  { id, holding },
-  { currentUser, t }
-) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+export const addCoinHolding = async (parent, { id, holding }, { token, t }) => {
+  authenticateUser(token);
+
   const { type, name } = holding;
   const holdingId = `${type}-${name.toLowerCase().split(' ').join('-')}`;
   try {
@@ -152,17 +172,17 @@ export const addCoinHolding = async (
       { new: true }
     );
   } catch (error) {
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
 export const updateCoinHolding = async (
   parent,
   { holdingId, holding },
-  { currentUser, t }
+  { token, t }
 ) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+  authenticateUser(token);
+
   try {
     return await Coin.findOneAndUpdate(
       { 'holdings._id': holdingId },
@@ -175,18 +195,18 @@ export const updateCoinHolding = async (
       { new: true }
     );
   } catch (error) {
-    console.log(error);
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    mongoClientLogger.error(error);
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
 export const removeCoinHolding = async (
   parent,
   { holdingId },
-  { currentUser, t }
+  { token, t }
 ) => {
-  if (!currentUser.loggedIn)
-    throw new Error(t('auth_error_userMustBeLoggedIn'));
+  authenticateUser(token);
+
   try {
     return await Coin.findOneAndUpdate(
       { 'holdings._id': holdingId },
@@ -194,7 +214,8 @@ export const removeCoinHolding = async (
       { new: true }
     );
   } catch (error) {
-    throw new Error(t('coin_error_listCouldNotBeUpdated'));
+    mongoClientLogger.error(error);
+    throw new InternalServerException(t('coin_error_listCouldNotBeUpdated'));
   }
 };
 
@@ -207,39 +228,33 @@ const fetchHTML = async (url: string) => {
         'X-Requested-With': 'XMLHttpRequest',
       },
     });
-    console.log('data 1', data);
     return data;
   } catch (error) {
-    console.error('fetchHTMLError ', error);
-    throw new Error(`Something went wrong, ${url} could not be retrieved.`);
+    fetchHTMLServiceLogger.error(error);
+    throw new InternalServerException(
+      `Something went wrong, ${url} could not be retrieved.`
+    );
   }
 };
 
-export const getSymbols = async (parent, _, { currentUser, t }) => {
-  // if (!currentUser.loggedIn)
-  // throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+export const getCoinSymbols = async (parent, _, { token, t }) => {
+  authenticateUser(token);
+
   try {
-    const url = `${cmcUrl}/listings/latest`;
+    const listings = await getLatestCoinListings();
 
-    const response = await axios.get(url, {
-      headers: {
-        'X-CMC_PRO_API_KEY': cmcApiKey,
-      },
-      params: {
-        limit: 100,
-      },
-    });
-
-    return response.data.data.map(({ name, symbol }) => ({ id: symbol, name }));
+    return listings.map(({ name, symbol }) => ({ id: symbol, name }));
   } catch (error) {
-    // console.error(error);
-    throw new Error(t('coin_error_listCouldNotBeRetrieved'));
+    cmcServiceLogger.error(error);
+    throw new InternalServerException(
+      t('coin_error_listingCouldNotBeRetrieved')
+    );
   }
 };
 
-export const getExchanges = async (parent, _, { currentUser, t }) => {
-  // if (!currentUser.loggedIn)
-  // throw new AuthenticationError(t('auth_error_userMustBeLoggedIn'));
+export const getExchanges = async (parent, _, { token, t }) => {
+  authenticateUser(token);
+
   try {
     const html = await fetchHTML('https://www.cryptowisser.com/exchanges');
     const $ = cheerio.load(html);
@@ -259,12 +274,15 @@ export const getExchanges = async (parent, _, { currentUser, t }) => {
 
     return exchanges;
   } catch (error) {
-    console.error(error);
-    throw new Error(t('coin_error_listCouldNotBeRetrieved'));
+    fetchHTMLServiceLogger.error(error);
+    throw new InternalServerException(
+      t('coin_error_exchangesCouldNotBeRetrieved')
+    );
   }
 };
 
 export default {
+  getCoinList,
   getCoinListings,
   getCoin,
   getCoins,
@@ -274,5 +292,5 @@ export default {
   addCoinHolding,
   updateCoinHolding,
   removeCoinHolding,
-  getSymbols,
+  getCoinSymbols,
 };

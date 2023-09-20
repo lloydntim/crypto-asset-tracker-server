@@ -9,6 +9,7 @@ import {
 } from '../mongo/auth/AuthController';
 
 import {
+  getCoinList,
   getCoinListings,
   getCoin,
   getCoins,
@@ -18,7 +19,7 @@ import {
   addCoinHolding,
   updateCoinHolding,
   removeCoinHolding,
-  getSymbols,
+  getCoinSymbols,
   getExchanges,
 } from '../mongo/coin/CoinController';
 
@@ -49,8 +50,7 @@ export const typeDefs = `
     message: String
   }
 
-
-  enum HoldingType {
+  enum HoldingStorageType {
     WALLET
     STAKING
     EXCHANGE
@@ -62,6 +62,7 @@ export const typeDefs = `
     slug: String
     name: String
     amount: Float
+    value: Float
     type: String
     currency: String
     ownerId: ID
@@ -76,7 +77,7 @@ export const typeDefs = `
   }
 
   type Coin {
-    id: ID!
+    id: ID
     coinId: ID
     name: String
     symbol: String
@@ -86,6 +87,31 @@ export const typeDefs = `
     updatedAt: Date
   }
 
+  type HoldingStorage {
+    type: String
+    total: String
+    holdings: [Holding]
+  }
+
+  type CoinListItem {
+    id: ID!
+    coinId: ID
+    price: Float
+    name: String
+    symbol: String
+    total: Float
+    value: Float
+    holdingStorages: [HoldingStorage]
+    creatorId: ID
+    createdAt: Date
+    updatedAt: Date
+  }
+
+  type CoinList {
+    balance: Float
+    coins: [CoinListItem]
+  }
+
   type CoinListing {
     id: ID
     symbol: String
@@ -93,7 +119,7 @@ export const typeDefs = `
     price: String
   }
 
-  type Symbol {
+  type CoinSymbol {
     id: ID
     name: String
   }
@@ -112,10 +138,11 @@ export const typeDefs = `
 
     getCoinListings(symbols: String, convert: String): [CoinListing]
 
+    getCoinList(creatorId: ID, convert: String): CoinList
     getCoins(creatorId: ID): [Coin]
     getCoin(coinId: ID!): Coin
 
-    getSymbols: [Symbol]
+    getCoinSymbols: [CoinSymbol]
     getExchanges: [Exchange]
   }
 
@@ -140,7 +167,7 @@ export const typeDefs = `
 `;
 
 export const resolvers = {
-  HoldingType: {
+  HoldingStorageType: {
     WALLET: 'wallet',
     STAKING: 'staking',
     EXCHANGE: 'exchange',
@@ -149,10 +176,11 @@ export const resolvers = {
     getPasswordToken,
     getUser,
     getUsers,
+    getCoinList,
     getCoinListings,
     getCoin,
     getCoins,
-    getSymbols,
+    getCoinSymbols,
     getExchanges,
   },
   Mutation: {

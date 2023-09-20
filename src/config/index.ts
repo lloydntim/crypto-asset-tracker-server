@@ -3,34 +3,27 @@ import 'dotenv/config';
 const {
   NODE_ENV,
   DEV_HOST,
-  SERVER_PROD_URL,
-  CLIENT_PROD_URL,
-  CLIENT_DEV_PORT,
-  MONGODB_DEV_URI,
+  DOMAIN: PROD_DOMAIN,
+  APOLLO_STUDIO_URL,
+  CLIENT_DOMAIN,
   MONGODB_URI,
   PORT,
 } = process.env;
 
-const SERVER_DEV_URL = `http://${DEV_HOST}:${PORT}`;
-const CLIENT_DEV_URL = `http://${DEV_HOST}:${CLIENT_DEV_PORT}`;
+const DEV_DOMAIN = `http://${DEV_HOST}:${PORT}`;
 
-export const port = PORT;
+const DOMAIN = NODE_ENV === 'development' ? DEV_DOMAIN : PROD_DOMAIN;
 
-export const domain =
-  NODE_ENV === 'development' ? SERVER_DEV_URL : SERVER_PROD_URL;
+const CMC_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency';
 
-export const clientUrl =
-  NODE_ENV === 'development' ? CLIENT_DEV_URL : CLIENT_PROD_URL;
+const GRAPHQL_ENDPOINT = '/graphql';
 
-export const cmcUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency';
-
-export const mongoURI =
-  NODE_ENV === 'development' ? MONGODB_DEV_URI : MONGODB_URI;
-
-export const GRAPHQL_ENDPOINT = '/graphql';
-export const mongoOptions = {
-  // useNewUrlParser: true,
-  // useUnifiedTopology: true,
-  // useCreateIndex: true,
-  // useFindAndModify: false,
+export {
+  GRAPHQL_ENDPOINT,
+  MONGODB_URI,
+  CMC_URL,
+  CLIENT_DOMAIN,
+  DOMAIN,
+  PORT,
+  APOLLO_STUDIO_URL,
 };

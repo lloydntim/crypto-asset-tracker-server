@@ -1,15 +1,15 @@
 import jwt from 'jsonwebtoken';
+import { appolloServiceLogger } from '../helpers/logger';
+import { t } from 'i18next';
+import { UnauthorizedException } from '../graphql/errors';
 
-export const getCurrentUser = token => {
+export const authenticateUser = (token) => {
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET);
-    return { ...user, ...{ loggedIn: true } };
+    appolloServiceLogger.info(user);
+
+    return user;
   } catch (error) {
-    return {
-      error,
-      errorMessage: 'Failed to Authenticate',
-      loggedIn: false,
-    };
+    throw new UnauthorizedException(t('auth_error_userMustBeLoggedIn'));
   }
 };
-

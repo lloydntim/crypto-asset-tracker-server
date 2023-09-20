@@ -21,4 +21,4 @@ export const mailhogConfig = {
 
 export const jwtSecret = JWT_SECRET;
 
-export const cmcApiKey = CMC_PRO_API_KEY;
+export const CMC_API_KEY = CMC_PRO_API_KEY;
